@@ -5,12 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const config = app.get(ConfigService);
 
   app.enableCors({
@@ -45,24 +45,26 @@ async function bootstrap() {
     },
   );
 
-  // Serve the built React frontend
+  // Serve the production React frontend
   const frontendPath = join(__dirname, '..', 'public');
 
   if (existsSync(join(frontendPath, 'index.html'))) {
     app.use(express.static(frontendPath));
 
-    // Handle React client-side routes without intercepting API requests
-    app.use((req, res, next) => {
-      if (
-        req.method === 'GET' &&
-        !req.path.startsWith('/api') &&
-        !req.path.includes('.')
-      ) {
-        return res.sendFile(join(frontendPath, 'index.html'));
-      }
+    // Support React client-side routing
+    app.use(
+      (req: Request, res: Response, next: NextFunction) => {
+        if (
+          req.method === 'GET' &&
+          !req.path.startsWith('/api') &&
+          !req.path.includes('.')
+        ) {
+          return res.sendFile(join(frontendPath, 'index.html'));
+        }
 
-      next();
-    });
+        next();
+      },
+    );
   }
 
   const port = config.get<number>('port') || 3001;
