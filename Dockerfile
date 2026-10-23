@@ -1,4 +1,3 @@
-
 # Stage 1: Build the React frontend
 FROM node:20-alpine AS frontend-build
 
@@ -11,14 +10,21 @@ COPY frontend/ ./
 RUN npm run build
 
 
-# Stage 2: Build the NestJS backend
-# FROM node:20-alpine AS backend-build
+# Stage 2: Build the NestJS backend (Debian/glibc so onnxruntime-node works)
 FROM node:20-slim AS backend-build
 
 WORKDIR /app
 
+# Skip the huge GPU (CUDA) download that onnxruntime-node tries on Linux x64
+ENV ONNXRUNTIME_NODE_INSTALL_CUDA=skip
+
 COPY backend/package*.json ./
-RUN npm ci
+
+# Be patient with flaky network connections
+RUN npm config set fetch-retries 5 \
+ && npm config set fetch-retry-mintimeout 20000 \
+ && npm config set fetch-retry-maxtimeout 120000 \
+ && npm ci
 
 COPY backend/ ./
 RUN npm run build
@@ -28,7 +34,6 @@ RUN npm prune --omit=dev
 
 
 # Stage 3: Production image
-# FROM node:20-alpine AS production
 FROM node:20-slim AS production
 
 WORKDIR /app
