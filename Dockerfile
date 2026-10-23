@@ -12,7 +12,8 @@ RUN npm run build
 
 
 # Stage 2: Build the NestJS backend
-FROM node:20-alpine AS backend-build
+# FROM node:20-alpine AS backend-build
+FROM node:20-slim AS backend-build
 
 WORKDIR /app
 
@@ -27,7 +28,8 @@ RUN npm prune --omit=dev
 
 
 # Stage 3: Production image
-FROM node:20-alpine AS production
+# FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
 WORKDIR /app
 

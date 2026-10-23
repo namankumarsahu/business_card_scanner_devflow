@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { pipeline } from '@huggingface/transformers';
+// import { pipeline } from '@huggingface/transformers';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -23,11 +23,13 @@ export class VoiceSttService {
       const cacheDir = path.join(os.homedir(), '.cache', 'whisper-models');
       this.logger.log(`Using cache directory: ${cacheDir}`);
 
+      const { pipeline } = await import('@huggingface/transformers');   // add this
+
       this.transcriber = await pipeline(
         'automatic-speech-recognition',
         'Xenova/whisper-tiny',
         { cache_dir: cacheDir },
-      );
+      );  
 
       this.logger.log('Whisper model loaded successfully');
       return this.transcriber;
